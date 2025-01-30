@@ -2,6 +2,8 @@ package main
 
 import (
 	"GoPasswords/app/account"
+	"GoPasswords/app/files"
+	"GoPasswords/app/output"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -12,26 +14,24 @@ func main() {
 	Menu()
 }
 
-func createAccount() {
+func createAccount(vault *account.VaultWithDb) {
 	login := promptData("Введите логин")
 	password := promptData("Введите пароль")
 	url := promptData("Введите URL")
 
 	myAccount, err := account.NewAccount(login, password, url)
 	if err != nil {
-		fmt.Println(err)
+		output.PrintError("Неверный формат URL или Логин.")
 		return
 	}
-	var vault = account.NewVault()
 	vault.AddAccount(*myAccount)
 }
 
-func findAccount() {
+func findAccount(vault *account.VaultWithDb) {
 	url := promptData("Введите url")
-	vault := account.NewVault()
 	accounts, err := vault.FindURL(url)
 	if err != nil {
-		color.Red("Аккаунт не найден.")
+		output.PrintError("Аккаунт не найден.")
 		return
 	}
 	fmt.Println("~~~~~~~~~~~~~~~~~~~")
@@ -42,14 +42,13 @@ func findAccount() {
 	}
 }
 
-func deleteAccount() {
+func deleteAccount(vault *account.VaultWithDb) {
 	url := promptData("Введите url")
-	vault := account.NewVault()
 	success := vault.DeleteURL(url)
 	if success {
 		color.Green("Удалены нужные элементы.")
 	} else {
-		color.Red("Такие элементы не найдены.")
+		output.PrintError("Такие элементы не найдены.")
 	}
 }
 
@@ -79,17 +78,18 @@ func getCommandFromUser() int {
 }
 
 func Menu() {
+	vault := account.NewVault(files.NewJsonDb("data.json"))
 MenuLoop:
 	for {
 		printMenu()
 		cmd := getCommandFromUser()
 		switch cmd {
 		case 1:
-			createAccount()
+			createAccount(vault)
 		case 2:
-			findAccount()
+			findAccount(vault)
 		case 3:
-			deleteAccount()
+			deleteAccount(vault)
 		case 4:
 			fmt.Println("Программа завершена.")
 			break MenuLoop
