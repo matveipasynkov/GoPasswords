@@ -15,9 +15,9 @@ func main() {
 }
 
 func createAccount(vault *account.VaultWithDb) {
-	login := promptData("Введите логин")
-	password := promptData("Введите пароль")
-	url := promptData("Введите URL")
+	login := promptData([]string{"Введите логин"})
+	password := promptData([]string{"Введите пароль"})
+	url := promptData([]string{"Введите URL"})
 
 	myAccount, err := account.NewAccount(login, password, url)
 	if err != nil {
@@ -28,7 +28,7 @@ func createAccount(vault *account.VaultWithDb) {
 }
 
 func findAccount(vault *account.VaultWithDb) {
-	url := promptData("Введите url")
+	url := promptData([]string{"Введите url"})
 	accounts, err := vault.FindURL(url)
 	if err != nil {
 		output.PrintError("Аккаунт не найден.")
@@ -43,7 +43,7 @@ func findAccount(vault *account.VaultWithDb) {
 }
 
 func deleteAccount(vault *account.VaultWithDb) {
-	url := promptData("Введите url")
+	url := promptData([]string{"Введите url"})
 	success := vault.DeleteURL(url)
 	if success {
 		color.Green("Удалены нужные элементы.")
@@ -52,11 +52,18 @@ func deleteAccount(vault *account.VaultWithDb) {
 	}
 }
 
-func promptData(prompt string) string {
-	fmt.Print(prompt + ": ")
+func promptData[T any](prompt []T) string {
+	for index, value := range prompt {
+		if index != len(prompt)-1 {
+			fmt.Println(value)
+		} else {
+			fmt.Printf("%v: ", value)
+		}
+	}
 	var res string
 	fmt.Scanln(&res)
 	return res
+
 }
 
 func printMenu() {
@@ -69,11 +76,18 @@ func printMenu() {
 
 func getCommandFromUser() int {
 	for {
-		answer := promptData("Введите команду")
+		answer := promptData([]string{
+			"Меню.",
+			"1. Создать аккаунт",
+			"2. Найти аккаунт",
+			"3. Удалить аккаунт",
+			"4. Выход",
+			"Введите команду"})
 		if answer == "1" || answer == "2" || answer == "3" || answer == "4" {
 			return int(answer[0] - '1' + 1)
 		}
 		fmt.Println("Команда неверная. Попробуйте ещё раз.")
+		fmt.Println("-------------------")
 	}
 }
 
@@ -81,7 +95,6 @@ func Menu() {
 	vault := account.NewVault(files.NewJsonDb("data.json"))
 MenuLoop:
 	for {
-		printMenu()
 		cmd := getCommandFromUser()
 		switch cmd {
 		case 1:

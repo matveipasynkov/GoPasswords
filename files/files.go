@@ -4,6 +4,8 @@ import (
 	"GoPasswords/app/output"
 	"fmt"
 	"os"
+
+	"github.com/fatih/color"
 )
 
 type JsonDb struct {
@@ -37,5 +39,5 @@ func (db *JsonDb) Write(content []byte) {
 		output.PrintError(err.Error())
 		return
 	}
-	fmt.Println("Запись успешна.")
+	color.Green("Запись успешна.")
 }
