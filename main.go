@@ -2,12 +2,14 @@ package main
 
 import (
 	"GoPasswords/app/account"
+	"GoPasswords/app/encrypter"
 	"GoPasswords/app/files"
 	"GoPasswords/app/output"
 	"fmt"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/joho/godotenv"
 )
 
 var menuVariants = []string{
@@ -29,6 +31,10 @@ var menu = map[int]func(*account.VaultWithDb){
 
 func main() {
 	fmt.Println("___Менеджер паролей___")
+	err := godotenv.Load()
+	if err != nil {
+		output.PrintError("Не удалось найти env файл")
+	}
 	Menu()
 }
 
@@ -110,7 +116,7 @@ func getCommandFromUser() int {
 }
 
 func Menu() {
-	vault := account.NewVault(files.NewJsonDb("data.json"))
+	vault := account.NewVault(files.NewJsonDb("data.vault"), *encrypter.NewEncrypter())
 MenuLoop:
 	for {
 		cmd := getCommandFromUser()

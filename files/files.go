@@ -2,7 +2,6 @@ package files
 
 import (
 	"GoPasswords/app/output"
-	"fmt"
 	"os"
 
 	"github.com/fatih/color"
@@ -21,7 +20,6 @@ func NewJsonDb(name string) *JsonDb {
 func (db *JsonDb) Read() ([]byte, error) {
 	data, err := os.ReadFile(db.filename)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	return data, nil

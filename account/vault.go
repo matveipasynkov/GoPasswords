@@ -1,11 +1,14 @@
 package account
 
 import (
+	"GoPasswords/app/encrypter"
 	"GoPasswords/app/output"
 	"encoding/json"
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 type Db interface {
@@ -20,7 +23,8 @@ type Vault struct {
 
 type VaultWithDb struct {
 	Vault
-	db Db
+	db  Db
+	enc encrypter.Encrypter
 }
 
 func (vault *VaultWithDb) AddAccount(acc Account) {
@@ -50,7 +54,7 @@ func (vault *VaultWithDb) DeleteURL(url string) bool {
 	return success
 }
 
-func (vault *VaultWithDb) FindAccounts(str string, checker func(Account, string)bool) (*[]Account, error) {
+func (vault *VaultWithDb) FindAccounts(str string, checker func(Account, string) bool) (*[]Account, error) {
 	foundAccounts := make([]Account, 0)
 	for _, account := range vault.Accounts {
 		if checker(account, str) {
@@ -76,7 +80,7 @@ func (vault *VaultWithDb) FindLogin(login string) (*[]Account, error) {
 	return &foundAccounts, nil
 }
 
-func NewVault(db Db) *VaultWithDb {
+func NewVault(db Db, enc encrypter.Encrypter) *VaultWithDb {
 	file, err := db.Read()
 	if err != nil {
 		return &VaultWithDb{
@@ -84,24 +88,29 @@ func NewVault(db Db) *VaultWithDb {
 				Accounts:  []Account{},
 				UpdatedAt: time.Now(),
 			},
-			db: db,
+			db:  db,
+			enc: enc,
 		}
 	}
+	data := enc.Decrypt(file)
 	var vault Vault
-	err = json.Unmarshal(file, &vault)
+	err = json.Unmarshal(data, &vault)
+	color.Cyan("Найдено %d аккаунтов", len(vault.Accounts))
 	if err != nil {
-		output.PrintError(err.Error())
+		output.PrintError("Не удалось разобрать файл data.vault")
 		return &VaultWithDb{
 			Vault: Vault{
 				Accounts:  []Account{},
 				UpdatedAt: time.Now(),
 			},
-			db: db,
+			db:  db,
+			enc: enc,
 		}
 	}
 	return &VaultWithDb{
 		Vault: vault,
 		db:    db,
+		enc:   enc,
 	}
 }
 
@@ -112,5 +121,6 @@ func (vault *VaultWithDb) Save() {
 		output.PrintError(err.Error())
 		return
 	}
-	vault.db.Write(data)
+	encData := vault.enc.Encrypt(data)
+	vault.db.Write(encData)
 }
