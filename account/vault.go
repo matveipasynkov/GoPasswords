@@ -50,10 +50,23 @@ func (vault *VaultWithDb) DeleteURL(url string) bool {
 	return success
 }
 
-func (vault *VaultWithDb) FindURL(url string) (*[]Account, error) {
+func (vault *VaultWithDb) FindAccounts(str string, checker func(Account, string)bool) (*[]Account, error) {
 	foundAccounts := make([]Account, 0)
 	for _, account := range vault.Accounts {
-		if strings.Contains(account.Url, url) {
+		if checker(account, str) {
+			foundAccounts = append(foundAccounts, account)
+		}
+	}
+	if len(foundAccounts) == 0 {
+		return nil, errors.New("DATA_NOT_FOUND")
+	}
+	return &foundAccounts, nil
+}
+
+func (vault *VaultWithDb) FindLogin(login string) (*[]Account, error) {
+	foundAccounts := make([]Account, 0)
+	for _, account := range vault.Accounts {
+		if strings.Contains(account.Login, login) {
 			foundAccounts = append(foundAccounts, account)
 		}
 	}
